@@ -1,0 +1,115 @@
+.tool-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 45px);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 5px 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .view-system-prompt {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    color: #999;
+    max-height: 30px;
+    padding: 5px 0;
+    margin: 5px 0;
+    border-radius: 10px;
+    border: 1px solid #c6c6c6;
+    cursor: pointer;
+    user-select: none;
+
+    i {
+      margin-right: 5px;
+    }
+  }
+
+  .chat-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+
+    .messages-container {
+      flex-grow: 3;
+      flex-basis: 80%;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-radius: 4px;
+
+      .message-toolbar {
+        display: flex;
+
+        .message-toolbar-option {
+          cursor: pointer;
+          margin-right: 10px;
+
+          &:hover {
+            color: #007bff;
+          }
+
+        }
+      }
+
+    }
+
+    .input-container {
+      display: flex;
+      flex-grow: 1;
+      flex-basis: 20%;
+      max-height: 50%;
+      flex-direction: column;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ccc;
+      border-radius: 0 0 4px 4px;
+
+      .message-editor-container {
+        flex: 1;
+        z-index: 0;
+
+        md-editor {
+          flex: 1 1 auto;
+          min-height: 0;
+          /* Ensures the flex item respects the container's height */
+        }
+      }
+
+      .message-actions-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 5px;
+
+        .btn {
+          cursor: pointer;
+        }
+
+        >*:not(:first-child) {
+          margin-left: 10px;
+        }
+
+        .ai-mode-toggle {
+          display: flex;
+          align-items: center;
+
+          input[type="radio"] {
+            appearance: none;
+          }
+
+          .ai-mode-label {
+            margin-right: 10px;
+            font-weight: bold;
+          }
+
+        }
+      }
+
+
+    }
+  }
+}

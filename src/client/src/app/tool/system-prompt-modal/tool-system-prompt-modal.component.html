@@ -1,0 +1,17 @@
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="editor-container">
+      <md-editor [(ngModel)]="tool.systemPrompt"></md-editor>
+    </div>
+      <div class="action-container">
+      <button class="btn btn-sm btn-success" (click)="saveSystemPrompt()">
+        <i class="fa fa-save"></i>
+        <span>Save</span>
+      </button>
+      <button class="btn btn-sm btn-secondary" (click)="closeModal()">
+        <i class="fa fa-times"></i>
+        <span>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>

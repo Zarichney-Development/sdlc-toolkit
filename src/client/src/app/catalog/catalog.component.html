@@ -1,0 +1,48 @@
+<div class="catalog-container">
+  <h2>Toolkit Catalog</h2>
+  <div class="filter-container">
+    <div class="filter">
+      <label for="role">Filter by Role:</label>
+      <select id="role" [(ngModel)]="selectedRole" (change)="onRoleChange($event)">
+        <option [ngValue]="null">All Roles</option>
+        <option *ngFor="let role of roles$ | async" [value]="role.id">{{ role.name }}</option>
+      </select>
+    </div>
+
+    <div class="filter">
+      <label for="category">Filter by SDLC Phase:</label>
+      <select id="category" [(ngModel)]="selectedCategory" (change)="onCategoryChange($event)">
+        <option [ngValue]="null">All Phases</option>
+        <option *ngFor="let category of categories$ | async" [value]="category.id">{{ category.name }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loadingRoles$ | async">Loading roles...</div>
+  <div *ngIf="errorRoles$ | async">Error loading roles</div>
+  <div *ngIf="loadingCategories$ | async">Loading categories...</div>
+  <div *ngIf="errorCategories$ | async">Error loading categories</div>
+  <div *ngIf="loadingTools$ | async">Loading tools...</div>
+  <div *ngIf="errorTools$ | async">Error loading tools</div>
+
+  <div class="catalog-body">
+    <ng-container *ngFor="let category of categories$ | async">
+      <div class="category-container" *ngIf="selectedCategory === null || selectedCategory === category.id">
+        <h3>{{ category.name }}</h3>
+        <ng-container *ngIf="filteredTools(category.id).length > 0; else comingSoon">
+          <div class="tool-card" *ngFor="let tool of filteredTools(category.id)">
+            <h4>{{ tool.name }}</h4>
+            <p><strong>Use Case:</strong> {{ tool.useCase }}</p>
+            <p><strong>Expected Input:</strong> {{ tool.expectedInput }}</p>
+            <p><strong>Expected Output:</strong> {{ tool.expectedOutput }}</p>
+            <p><strong>Intended Users:</strong> {{ tool.intendedUsers }}</p>
+            <button (click)="navigateToTool(tool.id)">Open Tool</button>
+          </div>
+        </ng-container>
+        <ng-template #comingSoon>
+          <p>Coming Soon</p>
+        </ng-template>
+      </div>
+    </ng-container>
+  </div>
+</div>

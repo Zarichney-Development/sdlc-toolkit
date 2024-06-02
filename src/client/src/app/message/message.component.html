@@ -1,0 +1,3 @@
+<div class="message" [ngClass]="{ 'user-message': isUserMessage(), 'bot-message': !isUserMessage() }">
+  <markdown [data]="response.message"></markdown>
+</div>

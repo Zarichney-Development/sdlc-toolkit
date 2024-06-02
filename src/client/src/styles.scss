@@ -1,0 +1,21 @@
+@import '~@fortawesome/fontawesome-free/css/all.css';
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+i.fa,
+i.fas {
+    margin-right: 5px;
+}
+
+.md-editor-container {
+    height: 100% !important;
+    min-height: 150px;
+}

@@ -1,0 +1,62 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+
+  i {
+    margin: 0 5px;
+  }
+
+  .app-title {
+    cursor: pointer;
+    user-select: none;
+    font-size: 125%;
+  }
+
+  .tool-title {
+    cursor: pointer;
+    user-select: none;
+
+    span {
+      font-size: 150%;
+      vertical-align: middle;
+    }
+  }
+
+  .new-session {
+    cursor: pointer;
+  }
+
+  .user-profile {
+    color: white;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    font-size: 115%;
+
+    .user-profile-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      color: black;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+
+      input {
+        width: 200px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .tool-title {
+    cursor: pointer;
+  }
+}

@@ -1,0 +1,96 @@
+.catalog-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  .filter-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    .filter {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      margin-right: 10px;
+
+      label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+    }
+
+    .filter:last-child {
+      margin-right: 0;
+    }
+  }
+
+  .catalog-body {
+    position: relative;
+    max-height: calc(100vh - 225px);
+    overflow-x: auto;
+  }
+
+  .category-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    h3 {
+      margin-top: 0;
+      color: #007bff;
+    }
+
+    .tool-card {
+      position: relative;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background-color: #f5f5f5;
+
+      h4 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      p {
+        margin: 5px 0;
+
+        strong {
+          color: #555;
+        }
+      }
+
+      button {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        border: 0;
+        padding: 5px;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .category-container:last-child {
+    margin-bottom: 0;
+  }
+}
