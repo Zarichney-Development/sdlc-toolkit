@@ -1,12 +1,12 @@
 <div class="app-header">
   <div class="app-title" (click)="navigateBack()">
-    <i *ngIf="(currentTool$ | async)" class="fas fa-circle-left"></i>
+    <i *ngIf="currentTool$ | async" class="fas fa-circle-left"></i>
     <span>SDLC Toolkit</span>
   </div>
-  <ng-container *ngIf="(currentTool$ | async) as currentTool">
+  <ng-container *ngIf="currentTool$ | async as currentTool">
     <div class="tool-title" (click)="toggleToolDetails()">
-      <i class="fas fa-circle-info"></i>
       <span>{{ currentTool.name }}</span>
+      <i class="fas fa-circle-info"></i>
     </div>
   </ng-container>
   <div class="user-profile" (click)="toggleUserProfile(true, $event)">
@@ -27,7 +27,10 @@
 </div>
 
 <router-outlet></router-outlet>
-<div *ngIf="(currentTool$ | async) as currentTool">
-  <tool-details-modal *ngIf="showToolDetails && currentTool" [tool]="currentTool"
-    (close)="toggleToolDetails()"></tool-details-modal>
+<div *ngIf="currentTool$ | async as currentTool">
+  <tool-details-modal
+    *ngIf="showToolDetails && currentTool"
+    [tool]="currentTool"
+    (close)="toggleToolDetails()"
+  ></tool-details-modal>
 </div>

@@ -70,7 +70,6 @@ export class CatalogComponent implements OnInit {
   }
 
   navigateToTool(toolId: number): void {
-
     this.store.dispatch(loadTool({ toolId: toolId }));
   }
 }

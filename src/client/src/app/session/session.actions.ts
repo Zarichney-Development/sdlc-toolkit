@@ -19,3 +19,5 @@ export const fetchLatestSessionSuccess = createAction('[Session] Fetch Latest Se
 export const fetchLatestSessionFailure = createAction('[Session] Fetch Latest Session Failure', props<{ error: any }>());
 
 export const addUserMessage = createAction('[Session] Add User Message', props<{ message: Response }>());
+
+export const updateSystemPrompt = createAction('[Session] Update System Prompt', props<{ session: Session, systemPrompt: string }>());
