@@ -2,7 +2,9 @@ namespace sdlc_toolkit_api.Models;
 
 public enum ToolkitOption
 {
-    UserStoryGenerator
+    UserStoryGenerator,
+    EndpointDocumentor,
+    SprintReviewer
 }
 
 public interface ITool
@@ -21,17 +23,8 @@ public interface ITool
     public string SuggestedGuidance { get; }
 }
 
-public abstract class BaseTool : ITool
+public abstract class BaseTool(List<Role> roles, List<Category> categories) : ITool
 {
-    protected BaseTool(List<Role> roles, List<Category> categories)
-    {
-        _roles = roles;
-        _categories = categories;
-    }
-
-    private readonly List<Role> _roles;
-    private readonly List<Category> _categories;
-
     public ToolkitOption Id { get; set; }
     public SdlcPhase CategoryId { get; set; }
     public Position[] Positions { get; set; } = null!;
@@ -42,16 +35,13 @@ public abstract class BaseTool : ITool
     public string ProcessingMethod { get; set; } = null!;
     public string SystemPrompt { get; set; } = null!;
     public string SuggestedGuidance { get; set; } = null!;
-
     public string IntendedUsers
     {
-        get { return string.Join(", ", _roles.Where(r => Positions.Contains(r.Id)).Select(r => r.Name)); }
+        get { return string.Join(", ", roles.Where(r => Positions.Contains(r.Id)).Select(r => r.Name)); }
     }
-
-
     public string Category
     {
-        get { return _categories.First(c => c.Id == CategoryId).Name; }
+        get { return categories.First(c => c.Id == CategoryId).Name; }
     }
 
 }

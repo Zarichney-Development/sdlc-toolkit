@@ -3,17 +3,32 @@
   <div class="filter-container">
     <div class="filter">
       <label for="role">Filter by Role:</label>
-      <select id="role" [(ngModel)]="selectedRole" (change)="onRoleChange($event)">
+      <select
+        id="role"
+        [(ngModel)]="selectedRole"
+        (change)="onRoleChange($event)"
+      >
         <option [ngValue]="null">All Roles</option>
-        <option *ngFor="let role of roles$ | async" [value]="role.id">{{ role.name }}</option>
+        <option *ngFor="let role of roles$ | async" [value]="role.id">
+          {{ role.name }}
+        </option>
       </select>
     </div>
 
     <div class="filter">
       <label for="category">Filter by SDLC Phase:</label>
-      <select id="category" [(ngModel)]="selectedCategory" (change)="onCategoryChange($event)">
+      <select
+        id="category"
+        [(ngModel)]="selectedCategory"
+        (change)="onCategoryChange($event)"
+      >
         <option [ngValue]="null">All Phases</option>
-        <option *ngFor="let category of categories$ | async" [value]="category.id">{{ category.name }}</option>
+        <option
+          *ngFor="let category of categories$ | async"
+          [value]="category.id"
+        >
+          {{ category.name }}
+        </option>
       </select>
     </div>
   </div>
@@ -27,16 +42,32 @@
 
   <div class="catalog-body">
     <ng-container *ngFor="let category of categories$ | async">
-      <div class="category-container" *ngIf="selectedCategory === null || selectedCategory === category.id">
-        <h3>{{ category.name }}</h3>
-        <ng-container *ngIf="filteredTools(category.id).length > 0; else comingSoon">
-          <div class="tool-card" *ngFor="let tool of filteredTools(category.id)">
-            <h4>{{ tool.name }}</h4>
+      <div
+        class="category-container"
+        *ngIf="selectedCategory === null || selectedCategory === category.id"
+      >
+        <h3 class="category-name">{{ category.name }}</h3>
+        <ng-container
+          *ngIf="filteredTools(category.id).length > 0; else comingSoon"
+        >
+          <div
+            class="tool-card"
+            *ngFor="let tool of filteredTools(category.id)"
+          >
+            <h3 (click)="navigateToTool(tool.id)" class="tool-name">
+              {{ tool.name }}
+            </h3>
             <p><strong>Use Case:</strong> {{ tool.useCase }}</p>
             <p><strong>Expected Input:</strong> {{ tool.expectedInput }}</p>
             <p><strong>Expected Output:</strong> {{ tool.expectedOutput }}</p>
             <p><strong>Intended Users:</strong> {{ tool.intendedUsers }}</p>
-            <button (click)="navigateToTool(tool.id)">Open Tool</button>
+            <button
+              class="btn btn-md btn-success"
+              (click)="navigateToTool(tool.id)"
+            >
+              <i class="fa fa-wrench"></i>
+              <span>Open Tool</span>
+            </button>
           </div>
         </ng-container>
         <ng-template #comingSoon>

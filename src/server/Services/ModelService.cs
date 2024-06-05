@@ -10,18 +10,9 @@ public interface IModelService
     public Task<string> GetResponse(ToolMessage[] chatHistory, DeployedModels? modelName = null);
 }
 
-public class ModelService : IModelService
+public class ModelService(IConfiguration configuration, OpenAIClient client) : IModelService
 {
-    private readonly OpenAIClient _client;
-    private readonly DeployedModels _defaultModel;
-    private readonly IConfiguration _config;
-
-    public ModelService(IConfiguration configuration) //OpenAIClient client)
-    {
-        // _client = client;
-        _config = configuration;
-        _defaultModel = DeployedModels.gpt35;
-    }
+    private readonly DeployedModels _defaultModel = DeployedModels.gpt35;
 
     private ChatCompletionsOptions GetChatCompletionsOptions(ToolMessage[] prompts, DeployedModels? modelName = null)
     {
@@ -44,7 +35,7 @@ public class ModelService : IModelService
     }
 
     private string GetDeploymentName(DeployedModels modelName)
-        => _config[$"{modelName}-deployment-name"]
+        => configuration[$"{modelName}-deployment-name"]
            ?? throw new Exception($"Deployment name for model {modelName} not found in configuration.");
 
     public async Task<string> GetResponse(ToolMessage[] chatHistory, DeployedModels? modelName = null)
@@ -54,7 +45,7 @@ public class ModelService : IModelService
         string userResponse;
         try
         {
-            Response<ChatCompletions> modelResponse = await _client.GetChatCompletionsAsync(chatCompletionsOptions);
+            Response<ChatCompletions> modelResponse = await client.GetChatCompletionsAsync(chatCompletionsOptions);
 
             userResponse = modelResponse.Value.Choices[0].Message.Content;
         }

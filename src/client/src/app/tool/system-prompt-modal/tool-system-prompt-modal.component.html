@@ -1,9 +1,9 @@
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="editor-container">
-      <md-editor [(ngModel)]="tool.systemPrompt"></md-editor>
+      <md-editor [(ngModel)]="editedSystemPrompt"></md-editor>
     </div>
-      <div class="action-container">
+    <div class="action-container">
       <button class="btn btn-sm btn-success" (click)="saveSystemPrompt()">
         <i class="fa fa-save"></i>
         <span>Save</span>

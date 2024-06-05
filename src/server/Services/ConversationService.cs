@@ -5,25 +5,16 @@ namespace sdlc_toolkit_api.Services;
 public interface IConversationService
 {
     Task<List<ToolMessage>> GetConversation(Guid sessionId);
+    void UpdateSystemPrompt(Guid sessionId, string systemPrompt);
     Task<Session> CreateNewConversation(string userId, ToolkitOption toolId);
     Task<ToolMessage> CreateResponse(Guid sessionId, string prompt, DeployedModels? modelName = null);
     Task<Session?> GetSession(string userId, ToolkitOption? toolId = null);
 }
 
-public class ConversationService : IConversationService
+public class ConversationService(IModelService modelService, IToolkitService toolkitService) : IConversationService
 {
-    private readonly IModelService _modelService;
-    private readonly List<Session> _sessions;
-    private readonly List<ToolMessage> _responses;
-    private readonly IToolkitService _toolkitService;
-
-    public ConversationService(IModelService modelService, IToolkitService toolkitService)
-    {
-        _modelService = modelService;
-        _toolkitService = toolkitService;
-        _responses = new List<ToolMessage>();
-        _sessions = new List<Session>();
-    }
+    private readonly List<Session> _sessions = new();
+    private readonly List<ToolMessage> _responses = new();
 
     public async Task<List<ToolMessage>> GetConversation(Guid sessionId)
     {
@@ -37,23 +28,29 @@ public class ConversationService : IConversationService
 
     public async Task<Session> CreateNewConversation(string userId, ToolkitOption toolId)
     {
+        var tool = toolkitService.GetTool(toolId)
+                   ?? throw new Exception("Tool not found");
+        
         var session = new Session
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            ToolId = toolId
+            ToolId = toolId,
+            SystemPrompt = tool.SystemPrompt,
+            Timestamp = DateTime.Now
         };
-
-        var tool = _toolkitService.GetTool(toolId)
-                   ?? throw new Exception("Tool not found");
-
-        var systemPrompt = new ToolMessage(session, tool.SystemPrompt);
-
-        _responses.Add(systemPrompt);
 
         _sessions.Add(session);
 
         return await Task.FromResult(session);
+    }
+    
+    public void UpdateSystemPrompt(Guid sessionId, string systemPrompt)
+    {
+        var session = _sessions.FirstOrDefault(s => s.Id == sessionId)
+                      ?? throw new Exception("Session not found");
+
+        session.SystemPrompt = systemPrompt;
     }
 
     public async Task<ToolMessage> CreateResponse(Guid sessionId, string prompt, DeployedModels? modelName = null)
@@ -61,10 +58,20 @@ public class ConversationService : IConversationService
         var session = _sessions.FirstOrDefault(s => s.Id == sessionId)
                       ?? throw new Exception("Session not found");
 
+        var isFirstMessage = _responses.Where(r => r.SessionId == sessionId).ToList().Count == 0;
+        if (isFirstMessage)
+        {
+            var systemPrompt = new ToolMessage(session, session.SystemPrompt);
+            _responses.Add(systemPrompt);
+        }
+
         var userPrompt = new ToolMessage(session, prompt, true);
+        
         _responses.Add(userPrompt);
 
-        var modelResponse = await _modelService.GetResponse(GetChatHistory(sessionId), modelName);
+        var conversation = GetChatHistory(sessionId);
+
+        var modelResponse = await modelService.GetResponse(conversation, modelName);
 
         var response = new ToolMessage(session, modelResponse);
 
@@ -83,18 +90,16 @@ public class ConversationService : IConversationService
 
     public Task<Session?> GetSession(string userId, ToolkitOption? toolId = null)
     {
-        var latestResponse = _responses.ToList()
-            .Where(s => s.UserId == userId)
-            .Where(s => toolId == null || s.ToolId == toolId)
+        var latestSession = _sessions.ToList()
+            .Where(s=>s.UserId == userId)
+            .Where(s=>toolId == null || s.ToolId == toolId)
             .MaxBy(s => s.Timestamp);
         
-        if (latestResponse == null)
+        if (latestSession == null)
         {
             return Task.FromResult<Session?>(null);
         }
         
-        var session = _sessions.FirstOrDefault(s => s.Id == latestResponse.SessionId);
-
-        return Task.FromResult(session);        
+        return Task.FromResult((Session?)latestSession);        
     }
 }

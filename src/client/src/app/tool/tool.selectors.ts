@@ -19,4 +19,10 @@ export const selectToolsError = createSelector(
   (state: ToolState) => state.error
 );
 
+export const selectToolLoaded = createSelector(
+  selectToolState,
+  (state: ToolState) => state.loaded
+)
+
+export const selectToolStates = createSelector(selectToolState, (state: ToolState) => state);
 export const selectCurrentTool = createSelector(selectToolState, (state: ToolState) => state.currentTool);

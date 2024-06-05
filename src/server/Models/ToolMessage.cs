@@ -12,7 +12,7 @@ public class ToolMessage
         Message = message;
         Timestamp = DateTime.Now;
     }
-    internal Guid Id { get; set; }
+    public Guid Id { get; set; }
     public Guid SessionId { get; init; }
     public ToolkitOption ToolId { get; set; }
     public string Message { get; init; }

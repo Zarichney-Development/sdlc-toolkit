@@ -7,10 +7,13 @@ import {
   delay,
   distinctUntilChanged,
   filter,
+  map,
+  of,
   skip,
   switchMap,
   take,
   tap,
+  withLatestFrom,
 } from 'rxjs';
 import { Tool } from './tool.model';
 import { Response } from '../message/message.model';
@@ -21,11 +24,12 @@ import {
   sendPrompt,
   addUserMessage
 } from '../session/session.actions';
-import { selectCurrentTool } from './tool.selectors';
+import { selectCurrentTool, selectToolLoaded } from './tool.selectors';
 import { selectUser } from '../user/user.selectors';
-import { selectCurrentSession, selectSessionLoaded, selectSessionResponses } from '../session/session.selectors';
+import { selectCurrentSession, selectSessionLoaded, selectSessionLoading, selectSessionResponses } from '../session/session.selectors';
 import { loadTool } from './tool.actions';
 import { MarkdownEditorComponent, MdEditorOption } from 'ngx-markdown-editor';
+import { Session } from '../session/session.model';
 
 @Component({
   selector: 'app-tool',
@@ -38,7 +42,7 @@ export class ToolComponent implements OnInit {
 
   tool!: Tool;
   userId!: string;
-  sessionId: string | null = null;
+  session!: Session;
   responses$: Observable<Response[]>;
   message: string = '';
   systemPromptShow: boolean = false;
@@ -51,7 +55,7 @@ export class ToolComponent implements OnInit {
   editorOptions: MdEditorOption = {
     showPreviewPanel: false,
     showBorder: true,
-    hideIcons: ['TogglePreview', 'FullScreen'],
+    hideIcons: ['Link', 'Image'],
     usingFontAwesome5: true,
     scrollPastEnd: 0,
     enablePreviewContentClick: true,
@@ -86,8 +90,29 @@ export class ToolComponent implements OnInit {
     private route: ActivatedRoute,
     private store: Store<AppState>
   ) {
+
     this.responses$ = this.store.pipe(
       select(selectSessionResponses),
+      withLatestFrom(this.store.select(selectCurrentSession)),
+      filter(([responses, session]) => !!session),
+      map(([responses, session]) => {
+
+        if (responses.length > 0) {
+          return responses;
+        }
+
+        // Before the conversation begins, prepend the edit-able system prompt
+        const systemPrompt: Response = {
+          sessionId: session!.id,
+          message: session!.systemPrompt,
+          userId: null,
+          id: "",
+          timestamp: "",
+          modelName: ""
+        };
+
+        return [systemPrompt];
+      }),
       tap(() => { this.loading = false; })
     );
 
@@ -100,7 +125,6 @@ export class ToolComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
-    console.log('scrolling to bottom')
     this.scrollToBottom();
   }
 
@@ -138,41 +162,49 @@ export class ToolComponent implements OnInit {
       tap(user => this.userId = user.userId)
     ).subscribe();
 
+
     // Create/load the session
-    this.subscription = combineLatest([
-      this.store.select(selectCurrentTool),
-      this.store.select(selectSessionLoaded).pipe(
-        filter(loaded => loaded),
-        switchMap(() => this.store.select(selectCurrentSession)),
-        distinctUntilChanged()
-      )
-    ])
-      .subscribe(([tool, session]) => {
-        if (!session || session.toolId !== toolId) {
-          this.store.dispatch(createSession());
-          this.store.select(selectCurrentSession).pipe(
-            filter(session => session !== null),
-            take(1),
-            tap(session => {
-              this.loadSession(session?.id!);
-            })
-          ).subscribe();
-        } else if (session && tool) {
-          this.tool = tool;
-          this.loadSession(session?.id!);
-        }
-      });
-  }
+    this.subscription =
+      this.store.select(selectToolLoaded).pipe(
+        filter(loaded => loaded === true),
+        switchMap(() => this.store.select(selectCurrentTool)),
+        tap(tool => this.tool = tool!),
+        switchMap(tool => this.store.select(selectCurrentSession)),
+        distinctUntilChanged(),
+        tap(session => {
+          if (!session || session?.toolId !== toolId) {
+            combineLatest([
+              this.store.select(selectSessionLoading),
+              this.store.select(selectToolLoaded)
+            ])
+              .pipe(
+                take(1),
+                tap(([sessionLoading, toolLoaded]) => {
+                  if (!sessionLoading && toolLoaded) {
+                    this.store.dispatch(createSession());
+                  }
+                })
+              ).subscribe();
+          } else if (session) {
+            this.session = session;
 
-  private loadSession(id: string): void {
-    this.sessionId = id;
-    this.store.dispatch(loadSessionResponses({ sessionId: id }));
+            this.store.select(selectSessionLoading).pipe(
+              take(1),
+              tap(loading => {
+                if (!loading) {
+                  this.store.dispatch(loadSessionResponses({ sessionId: session.id }));
+                }
+              })
+            ).subscribe();
+          }
+        })
+      ).subscribe();
   }
-
 
   private scrollToBottom(): void {
     try {
       this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
+      console.log('scrolled to bottom');
     } catch (err) {
       console.error('Could not scroll to bottom:', err);
     }
@@ -181,24 +213,26 @@ export class ToolComponent implements OnInit {
   private scrollToTop(): void {
     try {
       this.messagesContainer.nativeElement.scrollTop = 0;
+      console.log('scrolled to top');
     } catch (err) {
       console.error('Could not scroll to top:', err);
     }
   }
 
-  sendMessage(): void {
-    if (this.message.trim()) {
-      const userMessage: Response = {
-        sessionId: this.sessionId!,
-        message: this.message,
+  sendMessage(message: string): void {
+    if (message.trim()) {
+      const userPrompt: Response = {
+        id: "",
+        sessionId: this.session!.id,
+        message: message,
         userId: this.userId,
         timestamp: new Date().toISOString(),
         modelName: this.modelName
       };
 
-      this.store.dispatch(addUserMessage({ message: userMessage }));
+      this.store.dispatch(addUserMessage({ message: userPrompt }));
 
-      this.store.dispatch(sendPrompt({ sessionId: this.sessionId!, message: this.message }));
+      this.store.dispatch(sendPrompt({ sessionId: this.session!.id, message: message }));
 
       this.loading = true;
       this.store.pipe(
@@ -227,4 +261,7 @@ export class ToolComponent implements OnInit {
     console.log('Editor loaded:', event);
   }
 
+  newSession() {
+    this.store.dispatch(createSession());
+  }
 }

@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Response } from './message.model';
 
 @Component({
-  selector: 'app-message',
+  selector: 'response-message',
   templateUrl: './message.component.html',
   styleUrls: ['./message.component.scss']
 })

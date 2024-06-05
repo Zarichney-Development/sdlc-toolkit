@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { ApiService } from '../services/api.service';
 import { createSession, createSessionSuccess, createSessionFailure, loadSessionResponses, loadSessionResponsesSuccess, loadSessionResponsesFailure, sendPromptSuccess, sendPromptFailure, sendPrompt, fetchLatestSession, fetchLatestSessionSuccess, fetchLatestSessionFailure } from './session.actions';
-import { catchError, filter, map, mergeMap, switchMap, withLatestFrom } from 'rxjs/operators';
+import { catchError, filter, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { selectUser } from '../user/user.selectors';
@@ -33,7 +33,7 @@ export class SessionEffects {
       mergeMap(([action, user, tool, id]) => {
 
         let toolId = tool?.id ?? id;
-        if (!toolId) {
+        if (!(toolId >= 0)) {
           return of(createSessionFailure({ error: 'Tool ID not found' }));
         }
 

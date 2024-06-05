@@ -1,18 +1,29 @@
 .message {
-  max-width: 70%;
-  margin: 5px 0;
-  padding: 10px;
+  max-width: 90%;
+  width: fit-content;
+  padding: 5px 10px;
   border-radius: 10px;
   background-color: #f1f1f1;
+
 
   &.user-message {
     margin-left: auto;
     background-color: #007bff;
     color: white;
+    white-space: break-spaces;
+    line-break: anywhere;
+
+    markdown {
+      display: flex;
+    }
   }
 
   &.bot-message {
     align-self: flex-start;
     background-color: #e1e1e1;
+  }
+
+  p {
+    margin: 0 !important;
   }
 }

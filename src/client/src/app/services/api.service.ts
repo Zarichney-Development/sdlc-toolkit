@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {Position, Role } from '../role/role.model';
+import { Position, Role } from '../role/role.model';
 import { Tool } from '../tool/tool.model';
 import { Category, SdlcPhase } from '../category/category.model';
 import { Response } from '../message/message.model';
@@ -44,6 +44,10 @@ export class ApiService {
 
   createSession(userId: string, toolId: number): Observable<Session> {
     return this.http.post<Session>(`${this.apiUrl}/session`, { userId, toolId });
+  }
+
+  updateSession(sessionId: string, systemPrompt: string): Observable<null> {
+    return this.http.patch<null>(`${this.apiUrl}/session/${sessionId}`, { systemPrompt });
   }
 
   getSessionResponses(sessionId: string): Observable<Response[]> {

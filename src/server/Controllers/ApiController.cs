@@ -62,6 +62,20 @@ public class ApiController : ControllerBase
         return result;
     }
 
+    public class PatchSession
+    {
+        public required string SystemPrompt { get; init; }
+    }
+    
+    [HttpPatch]
+    [Route("session/{sessionId}")]
+    public ActionResult UpdateSession(Guid sessionId, [FromBody] PatchSession session)
+    {
+        _conversationService.UpdateSystemPrompt(sessionId, session.SystemPrompt);
+
+        return Ok();
+    }
+
     [HttpGet]
     [Route("session")]
     public async Task<Session?> GetSession(string userId, ToolkitOption? toolId)

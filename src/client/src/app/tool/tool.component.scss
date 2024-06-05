@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: calc(100vh - 45px);
-  max-width: 800px;
+  width: clamp(450px, 90vw, 90vw);
   margin: 0 auto;
   padding: 5px 10px;
   background-color: #f9f9f9;
@@ -42,17 +42,27 @@
       background-color: #f1f1f1;
       border-radius: 4px;
 
-      .message-toolbar {
-        display: flex;
+      .message-wrapper {
 
-        .message-toolbar-option {
-          cursor: pointer;
-          margin-right: 10px;
-
-          &:hover {
-            color: #007bff;
+        &.user {
+          .message-toolbar {
+            justify-content: flex-end;
           }
+        }
 
+        .message-toolbar {
+          display: flex;
+
+          .message-toolbar-option {
+            cursor: pointer;
+            margin-top: 5px;
+            margin-left: 10px;
+
+            &:hover {
+              color: #007bff;
+            }
+
+          }
         }
       }
 
@@ -71,7 +81,7 @@
 
       .message-editor-container {
         flex: 1;
-        z-index: 0;
+        z-index: 1;
 
         md-editor {
           flex: 1 1 auto;
@@ -83,10 +93,15 @@
       .message-actions-container {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         margin-top: 5px;
+        user-select: none;
 
-        .btn {
-          cursor: pointer;
+        >.btn {
+
+          &:last-child {
+            margin-left: 25px;
+          }
         }
 
         >*:not(:first-child) {
@@ -96,6 +111,7 @@
         .ai-mode-toggle {
           display: flex;
           align-items: center;
+          z-index: 0;
 
           input[type="radio"] {
             appearance: none;

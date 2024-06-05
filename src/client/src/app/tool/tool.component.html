@@ -11,31 +11,38 @@
   </div>
   <tool-system-prompt-modal
     *ngIf="systemPromptOpen"
-    [tool]="tool"
+    [session]="session"
     (close)="systemPromptOpen = false"
   ></tool-system-prompt-modal>
   <div class="chat-container">
     <div class="messages-container" #messagesContainer>
-      <ng-container *ngFor="let response of responses$ | async; let i = index">
-        <ng-container *ngIf="i > 0 || systemPromptShow">
-          <app-message [response]="response" [userId]="userId"></app-message>
-          <div class="message-toolbar">
-            <div
-              class="message-toolbar-option copy-message"
-              (click)="addMessageToClipboard(response)"
-            >
-              <i class="fa fa-copy"></i>
-              <span>Copy</span>
+      <ng-container *ngIf="responses$ | async as responses">
+        <ng-container *ngFor="let response of responses; let i = index">
+          <ng-container *ngIf="i > 0 || systemPromptShow">
+            <div class="message-wrapper" [class.user]="!!response.userId">
+              <response-message
+                [response]="response"
+                [userId]="userId"
+              ></response-message>
+              <div class="message-toolbar">
+                <div
+                  class="message-toolbar-option copy-message"
+                  (click)="addMessageToClipboard(response)"
+                >
+                  <i class="fa fa-copy"></i>
+                  <span>Copy</span>
+                </div>
+                <div
+                  class="message-toolbar-option edit-system-prompt"
+                  *ngIf="i === 0 && systemPromptShow && responses.length <= 1"
+                  (click)="systemPromptOpen = true"
+                >
+                  <i class="fa fa-edit"></i>
+                  <span>Edit</span>
+                </div>
+              </div>
             </div>
-            <div
-              class="message-toolbar-option edit-system-prompt"
-              *ngIf="i === 0 && systemPromptShow"
-              (click)="systemPromptOpen = true"
-            >
-              <i class="fa fa-edit"></i>
-              <span>Edit</span>
-            </div>
-          </div>
+          </ng-container>
         </ng-container>
       </ng-container>
     </div>
@@ -46,40 +53,86 @@
           [options]="editorOptions"
           [disabled]="loading"
           [height]="'150px'"
-          (keydown.enter)="sendMessage()"
+          (keydown.enter)="sendMessage(message)"
           (keydown.shift.enter)="$event.preventDefault()"
           (onEditorLoaded)="onEditorLoaded($event)"
         >
         </md-editor>
       </div>
       <div class="message-actions-container">
-        <div class="ai-mode-toggle" matTooltip="The underlying model that is used. Fast - GPT 3.5 vs Quality - GPT 4.0">
+        <div
+          class="ai-mode-toggle"
+          matTooltip="The underlying model that is used. Fast - GPT 3.5 vs Quality - GPT 4.0"
+        >
           <i class="fas fa-circle-info"></i>
           <span class="ai-mode-label">AI Mode:</span>
           <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-sm btn-warning" [class.active]="modelName === 'gpt35'" (click)="modelName = 'gpt35'">
-              <input type="radio" name="modelName" value="gpt35" [checked]="modelName === 'gpt35'"> Fast
+            <label
+              class="btn btn-sm btn-warning"
+              [class.active]="modelName === 'gpt35'"
+              (click)="modelName = 'gpt35'"
+            >
+              <input
+                type="radio"
+                name="modelName"
+                value="gpt35"
+                [checked]="modelName === 'gpt35'"
+              />
+              <i class="fa fa-bolt"></i>
+              <span>Fast</span>
             </label>
-            <label class="btn btn-sm btn-warning" [class.active]="modelName === 'gpt4'" (click)="modelName = 'gpt4'">
-              <input type="radio" name="modelName" value="gpt4" [checked]="modelName === 'gpt4'"> Quality
+            <label
+              class="btn btn-sm btn-warning"
+              [class.active]="modelName === 'gpt4'"
+              (click)="modelName = 'gpt4'"
+            >
+              <input
+                type="radio"
+                name="modelName"
+                value="gpt4"
+                [checked]="modelName === 'gpt4'"
+              />
+              <i class="fa fa-ranking-star"></i>
+              <span>Quality</span>
             </label>
           </div>
         </div>
-        <div id="new-session" class="btn btn-sm btn-primary">
+        <div
+          id="new-session"
+          class="btn btn-sm btn-primary"
+          (click)="newSession()"
+        >
           <i class="fas fa-rotate-left"></i>
           <span>New Conversation</span>
         </div>
         <div
-          class="btn btn-sm btn-success"
+          class="btn btn-sm btn-info"
           [ngClass]="{
-            disabled: loading
+            disabled: (loading && !message) || message
           }"
-          (click)="sendMessage()"
+          (click)="sendMessage('Continue')"
         >
           <i
             class="fas"
             [ngClass]="{
-              'fa-paper-plane': !loading,
+              'fa-angles-left': !loading,
+              'fa-spinner': loading,
+              'fa-spin': loading
+            }"
+          ></i>
+          <span>Continue</span>
+        </div>
+        <div
+          class="btn btn-md btn-success"
+          [ngClass]="{
+            disabled: loading || !message
+          }"
+          (click)="sendMessage(message)"
+        >
+          <i
+            class="fas"
+            [ngClass]="{
+              'fa-send': !loading,
               'fa-spinner': loading,
               'fa-spin': loading
             }"

@@ -60,8 +60,4 @@ export class AppComponent {
   toggleToolDetails() {
     this.showToolDetails = !this.showToolDetails;
   }
-
-  newSession() {
-    this.store.dispatch(createSession());
-  }
 }
