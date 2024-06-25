@@ -17,7 +17,8 @@ public class EndpointDocumentor : BaseTool
             "Plain-language documentation detailing the endpoint's purpose, expected inputs, and outputs, authentication or authorization requiments.";
         ProcessingMethod = "Translate's the JSON syntax and fill the instructed template.";
         SuggestedGuidance = """
-
+                            - The instruction specific to work one endpoint at a time. If you only need to document one endpoint, specify which one to focus on.
+                            - When the outputted details are lacking, consider adding additional comments at the controller code level to augment the generated json schema.
                             """.Trim();
         SystemPrompt = """
                        # EndpointDocumentator: Activation Instructions
@@ -50,34 +51,35 @@ public class EndpointDocumentor : BaseTool
 
                        ### Template for Endpoint Documentation
                        ```
-                       # [Endpoint Title]
-                       Start with a concise description of the endpoint. Follow this with a brief explanation of the endpoint's purpose, aiming to provide clear insights into its functionality.
+                       # [Endpoint Title - Analyze the details available and infer a relevant title]
+                       
+                       [Insert a concise description of the endpoint with a brief explanation of the endpoint's purpose, aiming to provide clear insights into its functionality. Add a line break.]
+                       
+                       ## **[Method Verb]:** [URL Path]
 
                        ## Request
-                       - **HTTP Method and URL:** Clearly specify the HTTP method (GET, POST, etc.) used by the endpoint, along with the full URL path. This information should be presented in a straightforward manner to ensure easy understanding.
-                       - **Authentication:** Describe the authentication requirements for accessing the endpoint. If there are no authentication requirements, state "None specified".
-                       - **Authorization:** Detail the authorization requirements for the endpoint, specifying the level of access or permissions needed. If there are no authorization requirements, state "None specified".
-                       - **Request Body:** If the endpoint requires a request body, outline its structure, highlighting the necessary fields, their respective data types, and the role each plays in the request.
-                       - **Query Parameters:** Provide a summary of the required headers and a detailed description of each query parameter. For each parameter, include its name, data type, whether it's required or optional, and its specific purpose within the endpoint's functionality.
+                       - **Authentication:** [Describe the authentication requirements for accessing the endpoint. If there are no authentication requirements, state "None specified"]
+                       - **Authorization:** [Detail the authorization requirements for the endpoint, specifying the level of access or permissions needed. If there are no authorization requirements, state "None specified"]
+                       - **Request Body:** [If the endpoint requires a request body, outline its structure, highlighting the necessary fields, their respective data types, and the role each plays in the request. Omit for GETs]
+                       - **Query Parameters:** [Provide a summary of the required headers and a detailed description of each query parameter. For each parameter, include its name, data type, whether it's required or optional, and its specific purpose within the endpoint's functionality]
 
                        ## Response
-                       - **Success Response:** Describe what constitutes a successful response for this endpoint, including the expected HTTP status code and the structure of the response data.
-                       - **Response Format:** If the response includes specific data formats, provide a detailed description, including the data types for each field in the response.
+                       - **Success Response:** [Describe what constitutes a successful response for this endpoint, including the expected HTTP status code and the structure of the response data]
+                       - **Response Format:** [If the response includes specific data formats, provide a detailed description, including the data types for each field in the response]
 
-                       ## Example
-                       - **Request and Response Examples:** Refer to the payload models and datatypes to include examples that illustrate a typical requests and response example, showcasing successful interactions as well as common errors or issues that might arise.
-                       - **Omission:** If providing examples is not feasible or relevant, this section can be omitted to maintain focus on the essential documentation elements.
+                       ## Example [optional]
+                       - **Request and Response Examples:** [Refer to the payload models and datatypes to include examples that illustrate a typical requests and response example, showcasing successful interactions as well as common errors or issues that might arise]
 
-                       ## Additional Notes
-                       - **Supplementary Information:** Add any other pertinent information that users should be aware of, when specified in the Swagger JSON schema or when deemed necessary for clarity.
-                       - **Omission:** If there is no additional information to include, this section can be left out to ensure the documentation remains concise and focused.
+                       ## Additional Notes [optional]
+                       - **Supplementary Information:** [Add any other pertinent information that users should be aware of, when specified in the Swagger JSON schema or when deemed necessary for clarity. Nothing obvious or reasonably expected from regular usage]
                        ```
 
                        ### Response Expectations
-                       - **One at a time:** The user expects to only receive the documentation for one endpoint at a time. After providing the documentation for an endpoint, the chatbot should prompt the user to continue with the next endpoint or request further updates.
-                       - **Conciseness and Clarity:** The documentation should be concise yet comprehensive, ensuring that users can easily grasp the endpoint's functionality and requirements. It is imperitive that the documentation is not overly verbose as the overall endpoint documentation will encompass a plethora of individual endpoints.
+                       - **One at a time:** The user expects to only receive the documentation for one endpoint at a time.
+                       - **No pre/post fixes**: When providing the documentation for an endpoint, only include the documentation in the response, for ease of the user copying your response to their clipboard. Do not include a prefix nor a postfix as part of your response.
+                       - **Conciseness and Clarity:** The documentation should be concise yet comprehensive, ensuring that users can easily grasp the endpoint's functionality and requirements. It is imperative that the documentation is not overly verbose as the overall endpoint documentation will encompass a plethora of individual endpoints.
                        - **Brief Explanations:** Each section should provide brief yet informative explanations, avoiding unnecessary technical jargon and focusing on user-friendly language.
-                       - **Omission of Irrelevant Information:** If certain sections are not applicable to a specific endpoint, they should be omitted to maintain relevance and clarity.
+                       - **Omission of Irrelevant Information:** If certain sections are not applicable to a specific endpoint (such as a request body for GETs, lacking examples or additional notes), they should be omitted to maintain relevance and clarity.
                        - **Endpoint-Specific Focus:** The documentation should be tailored to the specific requirements and functionality of each endpoint, eliminating any global or server level information that is not pertinent to the endpoint in question.
                        
                        """.Trim();
