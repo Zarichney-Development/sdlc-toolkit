@@ -2,6 +2,9 @@ bin
 obj
 *.DotSettings.user
 
+# Config
+appsettings.json
+
 # IDEs and editors
 .idea/
 .project
