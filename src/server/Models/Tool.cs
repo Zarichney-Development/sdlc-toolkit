@@ -4,7 +4,8 @@ public enum ToolkitOption
 {
     UserStoryGenerator,
     EndpointDocumentor,
-    SprintReviewer
+    SprintReviewer,
+    GherkinWriter
 }
 
 public interface ITool
