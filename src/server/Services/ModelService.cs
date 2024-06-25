@@ -1,6 +1,8 @@
-using Azure;
-using Azure.AI.OpenAI;
+using System.ClientModel;
+using System.Text.Json;
+using OpenAI.Chat;
 using Microsoft.Extensions.Configuration;
+using OpenAI;
 using sdlc_toolkit_api.Models;
 
 namespace sdlc_toolkit_api.Services;
@@ -14,24 +16,29 @@ public class ModelService(IConfiguration configuration, OpenAIClient client) : I
 {
     private readonly DeployedModels _defaultModel = DeployedModels.gpt35;
 
-    private ChatCompletionsOptions GetChatCompletionsOptions(ToolMessage[] prompts, DeployedModels? modelName = null)
+    private List<ChatMessage> MapMessages(ToolMessage[] prompts)
     {
-        var messages = new List<ChatRequestMessage>();
+        var messages = new List<ChatMessage>();
         foreach (var prompt in prompts)
         {
-            if (prompt.UserId == null)
+            ChatMessage message;
+            if (messages.Count == 0)
             {
-                messages.Add(new ChatRequestSystemMessage(prompt.Message));
+                message = ChatMessage.CreateSystemMessage(prompt.Message);
+            }
+            else if (prompt.UserId != null)
+            {
+                message = ChatMessage.CreateUserMessage(prompt.Message);
             }
             else
             {
-                messages.Add(new ChatRequestUserMessage(prompt.Message));
+                message = ChatMessage.CreateAssistantMessage(prompt.Message);
             }
+
+            messages.Add(message);
         }
 
-        var deploymentName = GetDeploymentName(modelName ?? _defaultModel);
-
-        return new ChatCompletionsOptions(deploymentName, messages);
+        return messages;
     }
 
     private string GetDeploymentName(DeployedModels modelName)
@@ -40,14 +47,38 @@ public class ModelService(IConfiguration configuration, OpenAIClient client) : I
 
     public async Task<string> GetResponse(ToolMessage[] chatHistory, DeployedModels? modelName = null)
     {
-        var chatCompletionsOptions = GetChatCompletionsOptions(chatHistory);
+        var messages = MapMessages(chatHistory);
+
+        var model = GetDeploymentName(modelName ?? _defaultModel);
+        var chatClient = client.GetChatClient(model);
 
         string userResponse;
         try
         {
-            Response<ChatCompletions> modelResponse = await client.GetChatCompletionsAsync(chatCompletionsOptions);
+            ClientResult result = await chatClient.CompleteChatAsync(messages);
 
-            userResponse = modelResponse.Value.Choices[0].Message.Content;
+            var output = result.GetRawResponse().Content;
+            using var outputAsJson = JsonDocument.Parse(output.ToString());
+            var message = outputAsJson.RootElement
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString()!;
+
+            var usageProperty = outputAsJson.RootElement.GetProperty("usage");
+            
+            var promptTokenCount = usageProperty
+                .GetProperty("prompt_tokens")
+                .GetInt32();
+            
+            var completionTokenCount = usageProperty
+                .GetProperty("completion_tokens")
+                .GetInt32();
+            
+            var totalTokenCount = promptTokenCount + completionTokenCount; // Also in property "total_tokens"
+            Console.WriteLine($"Tokens used: {totalTokenCount}");
+
+            userResponse = message;
         }
         catch (Exception e)
         {

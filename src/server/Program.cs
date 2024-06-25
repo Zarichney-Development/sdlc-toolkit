@@ -1,5 +1,5 @@
-﻿using Azure;
-using Azure.AI.OpenAI;
+﻿using System.ClientModel;
+using OpenAI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,12 +13,26 @@ builder.Configuration.AddJsonFile("appsettings.json");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"]
-                  ?? throw new InvalidOperationException("Missing required configuration for Azure OpenAI endpoint.");
-string apiKey = builder.Configuration["AZURE_OPENAI_API_KEY"]
-                ?? throw new InvalidOperationException("Missing required configuration for Azure OpenAI API key.");
+var apiKey = builder.Configuration["AZURE_OPENAI_API_KEY"]
+             ?? builder.Configuration["OPENAI_API_KEY"]
+             ?? throw new InvalidOperationException("Missing required configuration for Azure OpenAI API key.");
 
-builder.Services.AddSingleton(new OpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey)));
+var endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
+
+OpenAIClient azureClient;
+if (string.IsNullOrEmpty(endpoint) && !string.IsNullOrEmpty(apiKey))
+{
+    azureClient = new(apiKey);
+}
+else
+{
+    azureClient = new (new ApiKeyCredential(apiKey), new OpenAIClientOptions
+    {
+        Endpoint = new Uri(endpoint!)
+    });
+}
+
+builder.Services.AddSingleton(azureClient);
 
 builder.Services.AddSingleton<IModelService, ModelService>();
 builder.Services.AddSingleton<IToolkitService, ToolkitService>();
