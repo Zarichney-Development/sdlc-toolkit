@@ -1,8 +1,6 @@
-import { createFeatureSelector, createSelector, select } from '@ngrx/store';
+import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { SessionState } from './session.reducer';
-import { selectCurrentTool, selectToolState, selectToolStates } from '../tool/tool.selectors';
-import { Observable, filter } from 'rxjs';
-import { AppState } from '../app.state';
+import { selectCurrentTool } from '../tool/tool.selectors';
 import { Session } from './session.model';
 
 export const selectSessionState = createFeatureSelector<SessionState>('sessionState');
@@ -17,7 +15,10 @@ export const selectCurrentSession = createSelector(
 export const selectSessionResponses = createSelector(
     selectSessionState,
     selectCurrentSession,
-    (state: SessionState, session: Session | undefined) => state.responses.filter(r => r.sessionId === session?.id)
+    (state: SessionState, session: Session | undefined) => 
+        state.responses
+                .filter(r => r.sessionId === session?.id)
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 );
 export const selectSessionLoading = createSelector(selectSessionState, (state: SessionState) => state.loading);
 export const selectSessionLoaded = createSelector(selectSessionState, (state: SessionState) => state.loaded);

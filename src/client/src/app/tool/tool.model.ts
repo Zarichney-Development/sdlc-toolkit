@@ -13,7 +13,7 @@ export interface Tool {
   intendedUsers?: string | null;
   categoryId: SdlcPhase;
   category?: string | null;
-  suggestedGuidance: string;
+  suggestedGuidance: string | null;
 }
 
 export enum ToolkitOption {

@@ -61,7 +61,7 @@
       </div>
       <div class="message-actions-container">
         <div
-          class="ai-mode-toggle"
+          id="ai-mode-toggle"
           matTooltip="The underlying model that is used. Fast - GPT 3.5 vs Quality - GPT 4.0"
         >
           <i class="fas fa-circle-info"></i>
@@ -83,14 +83,14 @@
             </label>
             <label
               class="btn btn-sm btn-warning"
-              [class.active]="modelName === 'gpt4'"
-              (click)="modelName = 'gpt4'"
+              [class.active]="modelName === 'gpt40'"
+              (click)="modelName = 'gpt40'"
             >
               <input
                 type="radio"
                 name="modelName"
-                value="gpt4"
-                [checked]="modelName === 'gpt4'"
+                value="gpt40"
+                [checked]="modelName === 'gpt40'"
               />
               <i class="fa fa-ranking-star"></i>
               <span>Quality</span>

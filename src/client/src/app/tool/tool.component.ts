@@ -8,7 +8,6 @@ import {
   distinctUntilChanged,
   filter,
   map,
-  of,
   skip,
   switchMap,
   take,
@@ -22,7 +21,8 @@ import {
   createSession,
   loadSessionResponses,
   sendPrompt,
-  addUserMessage
+  addUserMessage,
+  fetchLatestSession
 } from '../session/session.actions';
 import { selectCurrentTool, selectToolLoaded } from './tool.selectors';
 import { selectUser } from '../user/user.selectors';
@@ -50,7 +50,7 @@ export class ToolComponent implements OnInit {
   loading: boolean = true;
   subscription: any;
   $first: any;
-  modelName: string = 'gpt35'; // Default to "Fast"
+  modelName: string = 'gpt40'; // Default to "Quality"
 
   editorOptions: MdEditorOption = {
     showPreviewPanel: false,
@@ -162,7 +162,6 @@ export class ToolComponent implements OnInit {
       tap(user => this.userId = user.userId)
     ).subscribe();
 
-
     // Create/load the session
     this.subscription =
       this.store.select(selectToolLoaded).pipe(
@@ -181,7 +180,12 @@ export class ToolComponent implements OnInit {
                 take(1),
                 tap(([sessionLoading, toolLoaded]) => {
                   if (!sessionLoading && toolLoaded) {
-                    this.store.dispatch(createSession());
+                    if (!session){
+                      // If there are no session loaded, dispatch to fetch the latest using
+                      this.store.dispatch(fetchLatestSession({ userId: this.userId, toolId }));
+                    } else {
+                      this.store.dispatch(createSession());
+                    }
                   }
                 })
               ).subscribe();
@@ -221,18 +225,49 @@ export class ToolComponent implements OnInit {
 
   sendMessage(message: string): void {
     if (message.trim()) {
+
+      const now = new Date().toISOString();
+
+      // If this is the first message, insert the system prompt into the conversation history
+      this.store.pipe(
+        select(selectSessionResponses),
+        withLatestFrom(this.store.select(selectCurrentSession)),
+        filter(([responses, session]) => !!session),
+        take(1),
+        tap(([responses, session]) => {
+
+          if (responses.length > 0) {
+            // Ignore as the system prompt is already in the conversation history
+            return responses;
+          }
+
+            const systemPrompt: Response = {
+              sessionId: session!.id,
+              message: session!.systemPrompt,
+              userId: null,
+              id: "",
+              timestamp: now,
+              modelName: ""
+            };
+
+            this.store.dispatch(addUserMessage({ message: systemPrompt }));
+
+            return;
+          })
+      ).subscribe();
+
       const userPrompt: Response = {
         id: "",
         sessionId: this.session!.id,
         message: message,
         userId: this.userId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(new Date(now).getTime() + 1).toISOString(), // add one millisecond so that it's after the system prompt
         modelName: this.modelName
       };
 
       this.store.dispatch(addUserMessage({ message: userPrompt }));
 
-      this.store.dispatch(sendPrompt({ sessionId: this.session!.id, message: message }));
+      this.store.dispatch(sendPrompt({ sessionId: this.session!.id, message: message, modelName: this.modelName}));
 
       this.loading = true;
       this.store.pipe(

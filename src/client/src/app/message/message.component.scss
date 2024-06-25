@@ -12,6 +12,8 @@
     color: white;
     white-space: break-spaces;
     line-break: anywhere;
+    max-height: min(500px, calc(100vh - 400px));
+    overflow-x: auto;
 
     markdown {
       display: flex;

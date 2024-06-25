@@ -108,7 +108,7 @@
           margin-left: 10px;
         }
 
-        .ai-mode-toggle {
+        #ai-mode-toggle {
           display: flex;
           align-items: center;
           z-index: 0;
@@ -121,8 +121,12 @@
             margin-right: 10px;
             font-weight: bold;
           }
+          .active{
+            border-color: black;
+          }
 
         }
+
       }
 
 

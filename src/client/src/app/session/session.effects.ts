@@ -59,7 +59,7 @@ export class SessionEffects {
     this.actions$.pipe(
       ofType(sendPrompt),
       switchMap(action =>
-        this.apiService.sendPrompt(action.sessionId, action.message).pipe(
+        this.apiService.sendPrompt(action.sessionId, action.message, action.modelName!).pipe(
           map(response => sendPromptSuccess({ response })),
           catchError(error => of(sendPromptFailure({ error })))
         )

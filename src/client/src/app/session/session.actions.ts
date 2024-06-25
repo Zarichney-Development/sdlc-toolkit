@@ -6,7 +6,7 @@ export const loadSessionResponses = createAction('[Session] Load Session Respons
 export const loadSessionResponsesSuccess = createAction('[Session] Load Session Responses Success', props<{ responses: Response[] }>());
 export const loadSessionResponsesFailure = createAction('[Session] Load Session Responses Failure', props<{ error: any }>());
 
-export const sendPrompt = createAction('[Tool] Send Prompt', props<{ sessionId: string, message: string }>());
+export const sendPrompt = createAction('[Tool] Send Prompt', props<{ sessionId: string, message: string, modelName: string | null }>());
 export const sendPromptSuccess = createAction('[Tool] Send Prompt Success', props<{ response: Response }>());
 export const sendPromptFailure = createAction('[Tool] Send Prompt Failure', props<{ error: any }>());
 

@@ -7,7 +7,7 @@ import { loadTools, unloadTool } from './tool/tool.actions';
 import { selectCurrentTool } from './tool/tool.selectors';
 import { Tool } from './tool/tool.model';
 import { ActivatedRoute } from '@angular/router';
-import { createSession, fetchLatestSession } from './session/session.actions';
+import { fetchLatestSession } from './session/session.actions';
 import { Observable } from 'rxjs';
 
 @Component({

@@ -81,6 +81,11 @@ public class ApiController : ControllerBase
     public async Task<Session?> GetSession(string userId, ToolkitOption? toolId)
     {
         var result = await _conversationService.GetSession(userId, toolId);
+        
+        if (result == null && toolId != null)
+        {
+            result = await _conversationService.CreateNewConversation(userId, toolId.Value);
+        }
 
         return result;
     }
@@ -98,7 +103,12 @@ public class ApiController : ControllerBase
     [Route("prompt")]
     public async Task<ToolMessage> CreateResponse([FromBody] CreateResponseRequest request)
     {
-        var result = await _conversationService.CreateResponse(request.SessionId, request.Message, request.ModelName);
+        DeployedModels? modelName = null;
+        if (!string.IsNullOrEmpty(request.ModelName))
+        {
+            modelName = Enum.Parse<DeployedModels>(request.ModelName);
+        }
+        var result = await _conversationService.CreateResponse(request.SessionId, request.Message, modelName);
         
         return result;
     }
@@ -106,7 +116,7 @@ public class ApiController : ControllerBase
 
 public class CreateConversationRequest
 {
-    public string UserId { get; set; }
+    public required string UserId { get; set; }
     public ToolkitOption ToolId { get; set; }
 }
 
@@ -114,5 +124,5 @@ public class CreateResponseRequest
 {
     public Guid SessionId { get; set; }
     public required string Message { get; set; }
-    public DeployedModels? ModelName { get; set; }
+    public string? ModelName { get; set; }
 }

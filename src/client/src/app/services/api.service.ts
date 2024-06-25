@@ -54,8 +54,8 @@ export class ApiService {
     return this.http.get<Response[]>(`${this.apiUrl}/session/${sessionId}`);
   }
 
-  sendPrompt(sessionId: string, message: string): Observable<Response> {
-    return this.http.post<Response>(`${this.apiUrl}/prompt`, { sessionId, message });
+  sendPrompt(sessionId: string, message: string, modelName: string | undefined): Observable<Response> {
+    return this.http.post<Response>(`${this.apiUrl}/prompt`, { sessionId, message, modelName });
   }
 
   getLatestSession(userId: string, toolId: number | null): Observable<Session> {

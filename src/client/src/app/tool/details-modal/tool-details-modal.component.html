@@ -5,8 +5,9 @@
     <p><strong>Use Case:</strong> {{ tool.useCase }}</p>
     <p><strong>Expected Input:</strong> {{ tool.expectedInput }}</p>
     <p><strong>Expected Output:</strong> {{ tool.expectedOutput }}</p>
-    <p *ng-if="tool.suggestedGuidance">
-      <strong>Suggested Usage Guide:</strong> {{ tool.suggestedGuidance }}
+    <p id="suggested-guidance" *ngIf="tool.suggestedGuidance">
+      <strong>Suggested Usage Guide:</strong>
+      <span>{{ tool.suggestedGuidance }}</span>
     </p>
     <button (click)="closeModal()">Close</button>
   </div>
