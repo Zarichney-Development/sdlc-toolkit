@@ -1,22 +1,23 @@
-namespace sdlc_toolkit_api.Models;
+namespace Toolkit.Models;
 
-public enum Position
+public enum Roles
 {
     Developer,
     ProjectManager,
     ScrumMaster,
     ProductOwner,
     BusinessAnalyst,
+    QualityAssurance,
 }
 
 public class Role
 {
-    public Role(Position id, string name)
+    public Role(Roles id, string name)
     {
         Id = id;
         Name = name;
     }
 
-    public Position Id { get; set; }
+    public Roles Id { get; set; }
     public string Name { get; set; }
 }

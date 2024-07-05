@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using sdlc_toolkit_api.Models;
-using sdlc_toolkit_api.Services;
+using Toolkit.Models;
+using Toolkit.Services;
 
-namespace sdlc_toolkit_api.Controllers;
+namespace Toolkit.Controllers;
 
 [ApiController]
 [Route("api")]

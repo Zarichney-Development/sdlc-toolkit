@@ -1,12 +1,20 @@
-namespace sdlc_toolkit_api.Models;
+namespace Toolkit.Models;
 
 public enum ToolkitOption
 {
     UserStoryGenerator,
-    EndpointDocumentor,
+    EndpointDocumentation,
     SprintReviewer,
-    GherkinWriter
+    GherkinWriter,
+    BddEducator,
+    BddValueAssessor,
+    GherkinRefiner
 }
+public enum ToolGroup
+{
+    BehaviorDrivenDevelopment
+}
+
 
 public interface ITool
 {
@@ -17,28 +25,33 @@ public interface ITool
     public string ExpectedOutput { get; set; }
     public string ProcessingMethod { get; set; }
     public string SystemPrompt { get; set; }
-    public Position[] Positions { get; set; }
+    public Roles[] IntendedRoles { get; set; }
     public string IntendedUsers { get; }
     public SdlcPhase CategoryId { get; set; }
     public string Category { get; }
     public string SuggestedGuidance { get; }
+    public ToolGroup[] Groupings { get; set; }
+    public Dictionary<string, int> RelatedTools { get; set; }
 }
 
-public abstract class BaseTool(List<Role> roles, List<Category> categories) : ITool
+public abstract class BaseTool(IEnumerable<Role> roles, IEnumerable<Category> categories) : ITool
 {
     public ToolkitOption Id { get; set; }
     public SdlcPhase CategoryId { get; set; }
-    public Position[] Positions { get; set; } = null!;
+    public Roles[] IntendedRoles { get; set; } = Array.Empty<Roles>();
     public string Name { get; set; } = null!;
     public string UseCase { get; set; } = null!;
     public string ExpectedInput { get; set; } = null!;
     public string ExpectedOutput { get; set; } = null!;
     public string ProcessingMethod { get; set; } = null!;
     public string SystemPrompt { get; set; } = null!;
-    public string SuggestedGuidance { get; set; } = null!;
+    public string SuggestedGuidance { get; protected init; } = null!;
+    public ToolGroup[] Groupings { get; set; } = Array.Empty<ToolGroup>();
+    public Dictionary<string, int> RelatedTools { get; set; } = new();
+
     public string IntendedUsers
     {
-        get { return string.Join(", ", roles.Where(r => Positions.Contains(r.Id)).Select(r => r.Name)); }
+        get { return string.Join(", ", roles.Where(r => IntendedRoles.Contains(r.Id)).Select(r => r.Name)); }
     }
     public string Category
     {

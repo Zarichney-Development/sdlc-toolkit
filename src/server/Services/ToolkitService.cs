@@ -1,7 +1,6 @@
-using sdlc_toolkit_api.Models;
-using sdlc_toolkit_api.Tools;
+using Toolkit.Models;
 
-namespace sdlc_toolkit_api.Services;
+namespace Toolkit.Services;
 
 public interface IToolkitService
 {
@@ -23,10 +22,32 @@ public class ToolkitService : IToolkitService
         var categories = GetCategories();
 
         var assemblyClasses = typeof(ToolkitService).Assembly.GetTypes();
-        foreach (var tool in assemblyClasses.Where(c => c.IsSubclassOf(typeof(BaseTool))))
+        foreach (var tool in assemblyClasses.Where(c => c.IsSubclassOf(typeof(BaseTool)) && !c.IsAbstract))
         {
             // all tools must have a constructor that takes a List<Role> and List<Category>
             _tools.Add((ITool)Activator.CreateInstance(tool, roles, categories)!);
+        }
+
+        // If the tool does not have any Roles, it implies that it is intended for all roles
+        foreach (var tool in _tools.Where(tool => tool.IntendedRoles.Length == 0))
+        {
+            tool.IntendedRoles = roles.Select(r => r.Id).ToArray();
+        }
+        
+        // Build a dictionary of groups holding list of the tools
+        var groupedTools = _tools
+            .SelectMany(t => t.Groupings.Select(g => new { Group = g, Tool = t }))
+            .GroupBy(x => x.Group)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Tool.Id).ToList());
+
+        // Assign the related tools to each of the same grouping
+        foreach (var tool in _tools)
+        {
+            tool.RelatedTools = tool.Groupings
+                .SelectMany(g => groupedTools[g])
+                .Distinct()
+                .Where(id => id != tool.Id)
+                .ToDictionary(id => _tools.Single(t => t.Id == id).Name, id => (int)id);
         }
     }
 
@@ -46,11 +67,12 @@ public class ToolkitService : IToolkitService
     public List<Role> GetRoles()
         => new()
         {
-            new Role(Position.Developer, "Developer"),
-            new Role(Position.ProjectManager, "Project Manager"),
-            new Role(Position.ScrumMaster, "Scrum Master"),
-            new Role(Position.ProductOwner, "Product Owner"),
-            new Role(Position.BusinessAnalyst, "Business Analyst"),
+            new Role(Roles.Developer, "Developer"),
+            new Role(Roles.ProjectManager, "Project Manager"),
+            new Role(Roles.ScrumMaster, "Scrum Master"),
+            new Role(Roles.ProductOwner, "Product Owner"),
+            new Role(Roles.BusinessAnalyst, "Business Analyst"),
+            new Role(Roles.QualityAssurance, "Quality Assurance"),
         };
 
     public List<ITool> GetTools() => _tools;

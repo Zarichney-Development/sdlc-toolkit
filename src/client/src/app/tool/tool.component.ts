@@ -1,18 +1,21 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Store, select } from '@ngrx/store';
 import {
   Observable,
-  combineLatest,
-  delay,
   distinctUntilChanged,
   filter,
   map,
-  skip,
-  switchMap,
   take,
   tap,
   withLatestFrom,
+  Subject,
+  takeUntil,
+  delay,
+  switchMap,
+  skip,
+  combineLatestWith,
+  debounceTime
 } from 'rxjs';
 import { Tool } from './tool.model';
 import { Response } from '../message/message.model';
@@ -24,7 +27,7 @@ import {
   addUserMessage,
   fetchLatestSession
 } from '../session/session.actions';
-import { selectCurrentTool, selectToolLoaded } from './tool.selectors';
+import { selectCurrentTool, selectToolLoaded, selectToolsLoading } from './tool.selectors';
 import { selectUser } from '../user/user.selectors';
 import { selectCurrentSession, selectSessionLoaded, selectSessionLoading, selectSessionResponses } from '../session/session.selectors';
 import { loadTool } from './tool.actions';
@@ -36,21 +39,25 @@ import { Session } from '../session/session.model';
   templateUrl: './tool.component.html',
   styleUrls: ['./tool.component.scss']
 })
-export class ToolComponent implements OnInit {
+export class ToolComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
   @ViewChild(MarkdownEditorComponent) editor!: MarkdownEditorComponent;
+  @ViewChild('relatedToolsContent') relatedToolsContent!: ElementRef;
 
   tool!: Tool;
   userId!: string;
   session!: Session;
   responses$: Observable<Response[]>;
   message: string = '';
+  modelName: string = 'gpt40'; // Default to "Quality"
+  loading: boolean = true;
   systemPromptShow: boolean = false;
   systemPromptOpen: boolean = false;
-  loading: boolean = true;
+  showRelatedTools = false;
+  sessionCreationInProgress = false;
   subscription: any;
   $first: any;
-  modelName: string = 'gpt40'; // Default to "Quality"
+  destroy$ = new Subject<void>();
 
   editorOptions: MdEditorOption = {
     showPreviewPanel: false,
@@ -60,6 +67,7 @@ export class ToolComponent implements OnInit {
     scrollPastEnd: 0,
     enablePreviewContentClick: true,
     resizable: false,
+    placeholder: 'Enter your markdown content here...',
     markedjsOpt: {
       breaks: true,
       gfm: true,
@@ -69,7 +77,6 @@ export class ToolComponent implements OnInit {
       smartLists: true,
       smartypants: false
     },
-    placeholder: 'Enter your markdown content here...',
     customIcons: {
       Bold: { fontClass: 'fa fa-bold' },
       Italic: { fontClass: 'fa fa-italic' },
@@ -88,15 +95,52 @@ export class ToolComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private store: Store<AppState>
   ) {
+    this.responses$ = this.initializeResponses();
+  }
 
-    this.responses$ = this.store.pipe(
+  ngOnInit(): void {
+    this.initializeComponent();
+    this.handleRouteChanges();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeComponent(): void {
+    this.initializeTool();
+    this.initializeUser();
+    this.initializeSession();
+
+    // Scroll to bottom upon initial load
+    this.responses$.pipe(
+      filter(responses => responses.length > 0),
+      take(1),
+      delay(10),
+      tap(() => this.scrollToBottom())
+    ).subscribe()
+  }
+
+  private handleRouteChanges(): void {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      tap(() => {
+        this.initializeComponent();
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe();
+  }
+
+  private initializeResponses(): Observable<Response[]> {
+    return this.store.pipe(
       select(selectSessionResponses),
       withLatestFrom(this.store.select(selectCurrentSession)),
-      filter(([responses, session]) => !!session),
+      filter(([_, session]) => !!session),
       map(([responses, session]) => {
-
         if (responses.length > 0) {
           return responses;
         }
@@ -110,99 +154,77 @@ export class ToolComponent implements OnInit {
           timestamp: "",
           modelName: ""
         };
-
         return [systemPrompt];
       }),
-      tap(() => { this.loading = false; })
+      tap(() => { this.loading = false; }),
+      takeUntil(this.destroy$)
     );
-
-    this.responses$.pipe(
-      filter(responses => responses.length > 0),
-      take(1),
-      delay(10),
-      tap(() => this.scrollToBottom())
-    ).subscribe()
   }
 
-  ngAfterViewInit(): void {
-    this.scrollToBottom();
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-  }
-
-  ngOnInit(): void {
-
+  private initializeTool(): void {
     const toolId = +this.route.snapshot.paramMap.get('id')!;
-
-    // Set as current tool when app is loaded directly in this route
     this.store.select(selectCurrentTool).pipe(
-      take(1),
-      tap(tool => { if (!tool) this.store.dispatch(loadTool({ toolId })); }),
-    ).subscribe();
-
-    // Set the placeholder text from tool expected input
-    this.store.select(selectCurrentTool).pipe(
-      filter(tool => !!tool),
-      take(1),
-      tap(tool => {
-        this.editorOptions =
-        {
-          ...this.editorOptions,
-          placeholder: "Input: " + tool!.expectedInput
+      combineLatestWith([
+        this.store.select(selectToolsLoading),
+        this.store.select(selectToolLoaded)
+      ]),
+      distinctUntilChanged(),
+      tap(([tool, loading, loaded = false]) => {
+        if (!loading && !loaded) {
+          this.store.dispatch(loadTool({ toolId }));
         }
       }),
+      filter(([tool]) => !!tool),
+      take(1),
+      tap(([tool]) => {
+        this.tool = tool!;
+        this.updateEditorPlaceholder(tool!);
+      }),
+      takeUntil(this.destroy$)
     ).subscribe();
+  }
 
-    // Store the user ID
+  private initializeUser(): void {
     this.store.pipe(
       select(selectUser),
       take(1),
-      tap(user => this.userId = user.userId)
+      tap(user => this.userId = user.userId),
+      takeUntil(this.destroy$)
     ).subscribe();
+  }
 
-    // Create/load the session
-    this.subscription =
-      this.store.select(selectToolLoaded).pipe(
-        filter(loaded => loaded === true),
-        switchMap(() => this.store.select(selectCurrentTool)),
-        tap(tool => this.tool = tool!),
-        switchMap(tool => this.store.select(selectCurrentSession)),
-        distinctUntilChanged(),
-        tap(session => {
-          if (!session || session?.toolId !== toolId) {
-            combineLatest([
-              this.store.select(selectSessionLoading),
-              this.store.select(selectToolLoaded)
-            ])
-              .pipe(
-                take(1),
-                tap(([sessionLoading, toolLoaded]) => {
-                  if (!sessionLoading && toolLoaded) {
-                    if (!session){
-                      // If there are no session loaded, dispatch to fetch the latest using
-                      this.store.dispatch(fetchLatestSession({ userId: this.userId, toolId }));
-                    } else {
-                      this.store.dispatch(createSession());
-                    }
-                  }
-                })
-              ).subscribe();
-          } else if (session) {
-            this.session = session;
-
-            this.store.select(selectSessionLoading).pipe(
-              take(1),
-              tap(loading => {
-                if (!loading) {
-                  this.store.dispatch(loadSessionResponses({ sessionId: session.id }));
-                }
-              })
-            ).subscribe();
+  private initializeSession(): void {
+    this.store.select(selectToolLoaded).pipe(
+      filter(loaded => loaded === true),
+      switchMap(() => this.store.select(selectCurrentTool)),
+      distinctUntilChanged(),
+      switchMap(tool =>
+        this.store.select(selectCurrentSession).pipe(
+          withLatestFrom(
+            this.store.select(selectSessionLoading),
+            this.store.select(selectToolLoaded)
+          )
+        )
+      ),
+      debounceTime(300), // Add debounce to prevent rapid firing
+      tap(([session, sessionLoading, toolLoaded]) => {
+        if (!this.sessionCreationInProgress && (!session || session?.toolId !== this.tool.id)) {
+          if (!sessionLoading && toolLoaded) {
+            this.sessionCreationInProgress = true;
+            if (!session) {
+              this.store.dispatch(fetchLatestSession({ userId: this.userId, toolId: this.tool.id }));
+            } else {
+              this.store.dispatch(createSession());
+            }
           }
-        })
-      ).subscribe();
+        } else if (session) {
+          this.sessionCreationInProgress = false;
+          this.session = session;
+          this.loadConversation(session.id);
+        }
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe();
   }
 
   private scrollToBottom(): void {
@@ -223,38 +245,18 @@ export class ToolComponent implements OnInit {
     }
   }
 
+  private updateEditorPlaceholder(tool: Tool): void {
+    this.editorOptions = {
+      ...this.editorOptions,
+      placeholder: "Input: " + tool.expectedInput
+    };
+  }
+
   sendMessage(message: string): void {
     if (message.trim()) {
-
       const now = new Date().toISOString();
 
-      // If this is the first message, insert the system prompt into the conversation history
-      this.store.pipe(
-        select(selectSessionResponses),
-        withLatestFrom(this.store.select(selectCurrentSession)),
-        filter(([responses, session]) => !!session),
-        take(1),
-        tap(([responses, session]) => {
-
-          if (responses.length > 0) {
-            // Ignore as the system prompt is already in the conversation history
-            return responses;
-          }
-
-            const systemPrompt: Response = {
-              sessionId: session!.id,
-              message: session!.systemPrompt,
-              userId: null,
-              id: "",
-              timestamp: now,
-              modelName: ""
-            };
-
-            this.store.dispatch(addUserMessage({ message: systemPrompt }));
-
-            return;
-          })
-      ).subscribe();
+      this.insertSystemPromptIfNeeded(now);
 
       const userPrompt: Response = {
         id: "",
@@ -266,20 +268,46 @@ export class ToolComponent implements OnInit {
       };
 
       this.store.dispatch(addUserMessage({ message: userPrompt }));
+      this.store.dispatch(sendPrompt({ sessionId: this.session!.id, message: message, modelName: this.modelName }));
 
-      this.store.dispatch(sendPrompt({ sessionId: this.session!.id, message: message, modelName: this.modelName}));
-
-      this.loading = true;
-      this.store.pipe(
-        select(selectSessionResponses),
-        skip(1), // this is the user's submitted message
-        take(1) // this is the prompt response
-      ).subscribe(() => {
-        this.loading = false;
-      });
+      this.handleResponseLoading();
 
       this.message = '';
     }
+  }
+
+  private insertSystemPromptIfNeeded(now: string): void {
+    this.store.pipe(
+      select(selectSessionResponses),
+      withLatestFrom(this.store.select(selectCurrentSession)),
+      filter(([responses, session]) => !!session && responses.length === 0),
+      take(1),
+      tap(([_, session]) => {
+        const systemPrompt: Response = {
+          sessionId: session!.id,
+          message: session!.systemPrompt,
+          userId: null,
+          id: "",
+          timestamp: now,
+          modelName: ""
+        };
+        this.store.dispatch(addUserMessage({ message: systemPrompt }));
+      })
+    ).subscribe();
+  }
+
+  private loadConversation(sessionId: string): void {
+    this.store.dispatch(loadSessionResponses({ sessionId }));
+  }
+
+  private handleResponseLoading(): void {
+    this.loading = true;
+    this.store.pipe(
+      select(selectSessionResponses),
+      skip(1), // this is the user's submitted message
+      take(1), // this is the prompt response
+      tap(() => this.loading = false)
+    ).subscribe();
   }
 
   toggleSystemPrompt(): void {
@@ -297,6 +325,72 @@ export class ToolComponent implements OnInit {
   }
 
   newSession() {
-    this.store.dispatch(createSession());
+    if (!this.sessionCreationInProgress) {
+      this.sessionCreationInProgress = true;
+      this.store.dispatch(createSession());
+
+      // Wait for the new session to be created and then load its conversation
+      this.store.select(selectCurrentSession).pipe(
+        filter(session => !!session && session.id !== this.session?.id),
+        take(1),
+        tap(newSession => {
+          this.session = newSession!;
+          this.loadConversation(this.session.id);
+          this.sessionCreationInProgress = false;
+        })
+      ).subscribe();
+    }
+  }
+
+  toggleRelatedTools(event: MouseEvent) {
+    this.showRelatedTools = !this.showRelatedTools;
+    if (this.showRelatedTools) {
+      setTimeout(() => this.positionRelatedToolsContent(event), 0);
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    if (this.showRelatedTools) {
+      this.positionRelatedToolsContent();
+    }
+  }
+
+  positionRelatedToolsContent(event?: MouseEvent) {
+    const content = this.relatedToolsContent.nativeElement;
+    const button = event ? event.target as HTMLElement : content.previousElementSibling;
+    const rect = button.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if (spaceBelow < content.offsetHeight && spaceAbove > spaceBelow) {
+      content.style.bottom = `${button.offsetHeight}px`;
+      content.style.top = 'auto';
+    } else {
+      content.style.top = `${button.offsetHeight}px`;
+      content.style.bottom = 'auto';
+    }
+
+    // Adjust horizontal position if necessary
+    const rightEdge = rect.left + content.offsetWidth;
+    if (rightEdge > window.innerWidth) {
+      content.style.right = '0';
+      content.style.left = 'auto';
+    } else {
+      content.style.left = '0';
+      content.style.right = 'auto';
+    }
+  }
+
+  loadRelatedTool(toolId: number) {
+    this.store.dispatch(loadTool({ toolId }));
+    this.showRelatedTools = false;
+
+    // Navigate to the new tool route
+    this.router.navigate(['/tool', toolId]);
+  }
+
+  getValues(obj: { [key: string]: number }): number[] {
+    return Object.values(obj).map(Number);
   }
 }

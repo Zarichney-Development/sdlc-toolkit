@@ -1,38 +1,37 @@
 ﻿using System.ClientModel;
+using System.Text.Json.Serialization;
+using Azure;
+using Azure.AI.OpenAI;
 using OpenAI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
-using sdlc_toolkit_api.Services;
+using Toolkit.Models;
+using Toolkit.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.json");
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonNumberEnumConverter<ToolkitOption>());
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 var apiKey = builder.Configuration["AZURE_OPENAI_API_KEY"]
              ?? builder.Configuration["OPENAI_API_KEY"]
-             ?? throw new InvalidOperationException("Missing required configuration for Azure OpenAI API key.");
+             ?? throw new InvalidOperationException("Missing required configuration for Azure/OpenAI API key.");
 
-var endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
+var azureEndpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
 
-OpenAIClient azureClient;
-if (string.IsNullOrEmpty(endpoint) && !string.IsNullOrEmpty(apiKey))
-{
-    azureClient = new(apiKey);
-}
-else
-{
-    azureClient = new (new ApiKeyCredential(apiKey), new OpenAIClientOptions
-    {
-        Endpoint = new Uri(endpoint!)
-    });
-}
+var openAiClient = !string.IsNullOrEmpty(azureEndpoint) 
+    ? new AzureOpenAIClient(new Uri(azureEndpoint), new AzureKeyCredential(apiKey)) 
+    : new OpenAIClient(apiKey);
 
-builder.Services.AddSingleton(azureClient);
+builder.Services.AddSingleton(openAiClient);
 
 builder.Services.AddSingleton<IModelService, ModelService>();
 builder.Services.AddSingleton<IToolkitService, ToolkitService>();

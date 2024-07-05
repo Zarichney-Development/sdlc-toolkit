@@ -10,7 +10,6 @@ import { selectAllRoles, selectRolesLoading, selectRolesError } from '../role/ro
 import { selectAllTools, selectToolsLoading, selectToolsError } from '../tool/tool.selectors';
 import { selectAllCategories, selectCategoriesLoading, selectCategoriesError } from '../category/category.selectors';
 import { AppState } from '../app.state';
-import { Router } from '@angular/router';
 import { loadTool } from '../tool/tool.actions';
 
 @Component({

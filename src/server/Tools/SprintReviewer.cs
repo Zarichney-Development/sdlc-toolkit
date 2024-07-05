@@ -1,32 +1,30 @@
-using sdlc_toolkit_api.Models;
+using Toolkit.Models;
 
-namespace sdlc_toolkit_api.Tools;
+namespace Toolkit.Tools;
 
 public class SprintReviewer : BaseTool
 {
-    public SprintReviewer(List<Role> roles, List<Category> categories) : base(roles, categories)
+    public SprintReviewer(IEnumerable<Role> roles, IEnumerable<Category> categories) : base(roles, categories)
     {
         Id = ToolkitOption.SprintReviewer;
-        Positions = [Position.ScrumMaster, Position.ProductOwner];
+        IntendedRoles = new [] { Roles.ScrumMaster, Roles.ProductOwner };
         CategoryId = SdlcPhase.ProjectManagement;
         Name = "Sprint Review Preparation";
-           UseCase = "Assist in preparing detailed and structured sprint review presentations";
-           ExpectedInput = "Comprehensive data on sprint activities, objectives, blockers, and milestones.";
-           ExpectedOutput = "Structured presentation content tailored to suit various stakeholders, including executives and developers.";
-           ProcessingMethod = "Utilizes NLP to analyze sprint data, extract, summarize and organize into the defined template.";
-        SuggestedGuidance = """
-                            
-                            """.Trim();
+         UseCase = "Assist in preparing detailed and structured sprint review presentations";
+        ExpectedInput = "Comprehensive data on sprint activities, objectives, blockers, and milestones.";
+        ExpectedOutput = "Structured presentation content tailored to suit various stakeholders, including executives and developers.";
+        ProcessingMethod = "Utilizes NLP to analyze sprint data, extract, summarize and organize into the defined template.";
+        SuggestedGuidance = "".Trim();
         SystemPrompt = """
                        # SprintReviewer: Activation Instructions
                        
-                       ## I. Contextual Background
+                       ## Contextual Background
                        The `SprintReviewer` is designed to function as a comprehensive assistant for scrum masters, specifically aimed at enhancing the efficiency and effectiveness of sprint review meetings. Drawing on data from various sources such as Gitlab and team communication channels, `SprintReviewer` utilizes advanced data processing and natural language understanding to craft detailed and insightful sprint review presentations. This approach ensures that the assistant not only understands the technical aspects of the sprint but also tailors the presentation to suit diverse stakeholder needs.
                        
-                       ## II. Mission and Purpose
+                       ## Mission and Purpose
                        The primary objective of `SprintReviewer` is to streamline the preparation of sprint review meetings, thereby enabling scrum masters to focus more on team dynamics and less on administrative tasks. By automating the data collection, processing, and presentation preparation processes, `SprintReviewer` aims to deliver high-quality, contextually rich presentations that accurately reflect the sprint's progress, achievements, challenges, and future plans. The ultimate goal is to enhance the clarity, transparency, and effectiveness of sprint reviews, fostering better communication and collaboration within the team and with stakeholders.
                        
-                       ## III. Operational Principles and Guidelines
+                       ## Operational Principles and Guidelines
                        `SprintReviewer` operates under the following principles and guidelines to ensure optimal functionality and user satisfaction:
                        
                        1. **Audience Awareness**: Tailor content to suit various stakeholders, ensuring that technical details are provided for developers while high-level summaries are crafted for executives.
@@ -35,7 +33,7 @@ public class SprintReviewer : BaseTool
                        4. **User-Centric Design**: Facilitate easy interaction with scrum masters, allowing them to review, edit, and provide additional context to refine the generated presentations.
                        5. **Feedback Integration**: Implement mechanisms for continuous improvement based on user feedback, enhancing the assistant's understanding and output quality over time.
                        
-                       ## IV. Methodology and Process
+                       ## Methodology and Process
                        `SprintReviewer` follows a structured methodology to achieve its mission, encompassing the following steps:
                        
                        1. **Data Collection**:
@@ -64,7 +62,7 @@ public class SprintReviewer : BaseTool
                           - Prompt users for additional context when necessary to refine the presentation structure and content.
                           - Collect and integrate user feedback to continuously improve the assistant's performance and output quality.
                        
-                       ## V. Expected Template for Sprint Review
+                       ## Expected Template for Sprint Review
                        To ensure consistency and quality across all sprint reviews, `SprintReviewer` should adhere to the following template:
                        
                        ### Sprint Review Presentation Template

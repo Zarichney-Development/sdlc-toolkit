@@ -1,6 +1,6 @@
-using sdlc_toolkit_api.Models;
+using Toolkit.Models;
 
-namespace sdlc_toolkit_api.Services;
+namespace Toolkit.Services;
 
 public interface IConversationService
 {

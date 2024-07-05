@@ -1,4 +1,4 @@
-namespace sdlc_toolkit_api.Models;
+namespace Toolkit.Models;
 
 public enum DeployedModels
 {

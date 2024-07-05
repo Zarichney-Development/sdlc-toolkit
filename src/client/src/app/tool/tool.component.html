@@ -61,7 +61,24 @@
       </div>
       <div class="message-actions-container">
         <div
+          id="related-tools"
+          class="tool-action">
+          <div class="related-tools-dropdown" *ngIf="tool && getValues(tool.relatedTools).length > 0">
+            <button class="related-tools-btn"
+            (click)="toggleRelatedTools($event)">
+              Related Tools
+              <i class="fas fa-caret-down"></i>
+            </button>
+            <div class="related-tools-content" [class.show]="showRelatedTools" #relatedToolsContent>
+              <a *ngFor="let item of tool.relatedTools | keyvalue" (click)="loadRelatedTool(item.value)">
+                {{ item.key }}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
           id="ai-mode-toggle"
+          class="tool-action"
           matTooltip="The underlying model that is used. Fast - GPT 3.5 vs Quality - GPT 4.0"
         >
           <i class="fas fa-circle-info"></i>
@@ -97,47 +114,53 @@
             </label>
           </div>
         </div>
-        <div
-          id="new-session"
-          class="btn btn-sm btn-primary"
-          (click)="newSession()"
-        >
-          <i class="fas fa-rotate-left"></i>
-          <span>New Conversation</span>
+        <div class="tool-action">
+          <div
+            id="new-session"
+            class="btn btn-sm btn-primary"
+            (click)="newSession()"
+          >
+            <i class="fas fa-rotate-left"></i>
+            <span>New Conversation</span>
+          </div>
         </div>
-        <div
-          class="btn btn-sm btn-info"
-          [ngClass]="{
-            disabled: (loading && !message) || message
-          }"
-          (click)="sendMessage('Continue')"
-        >
-          <i
-            class="fas"
+        <div class="tool-action">
+          <div
+            class="btn btn-sm btn-info"
             [ngClass]="{
-              'fa-angles-left': !loading,
-              'fa-spinner': loading,
-              'fa-spin': loading
+              disabled: (loading && !message) || message
             }"
-          ></i>
-          <span>Continue</span>
+            (click)="sendMessage('Continue')"
+          >
+            <i
+              class="fas"
+              [ngClass]="{
+                'fa-angles-left': !loading,
+                'fa-spinner': loading,
+                'fa-spin': loading
+              }"
+            ></i>
+            <span>Continue</span>
+          </div>
         </div>
-        <div
-          class="btn btn-md btn-success"
-          [ngClass]="{
-            disabled: loading || !message
-          }"
-          (click)="sendMessage(message)"
-        >
-          <i
-            class="fas"
+        <div class="tool-action">
+          <div
+            class="btn btn-md btn-success"
             [ngClass]="{
-              'fa-send': !loading,
-              'fa-spinner': loading,
-              'fa-spin': loading
+              disabled: loading || !message
             }"
-          ></i>
-          <span>Send</span>
+            (click)="sendMessage(message)"
+            >
+            <i
+            class="fas"
+              [ngClass]="{
+                'fa-send': !loading,
+                'fa-spinner': loading,
+                'fa-spin': loading
+              }"
+            ></i>
+            <span>Send</span>
+          </div>
         </div>
       </div>
     </div>

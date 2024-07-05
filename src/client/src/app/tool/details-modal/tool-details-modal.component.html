@@ -1,6 +1,6 @@
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2>{{ tool.name }}</h2>
+    <h1>{{ tool.name }}</h1>
     <p><strong>Intended Roles:</strong> {{ tool.intendedUsers }}</p>
     <p><strong>Use Case:</strong> {{ tool.useCase }}</p>
     <p><strong>Expected Input:</strong> {{ tool.expectedInput }}</p>
@@ -9,6 +9,9 @@
       <strong>Suggested Usage Guide:</strong>
       <span>{{ tool.suggestedGuidance }}</span>
     </p>
-    <button (click)="closeModal()">Close</button>
+    <button (click)="closeModal()" class="btn btn-secondary">
+      <i class="fa fa-times"></i>
+      <span>Close</span>
+    </button>
   </div>
 </div>

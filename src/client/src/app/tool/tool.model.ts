@@ -2,7 +2,7 @@ import { SdlcPhase } from "../category/category.model";
 import { Position } from "../role/role.model";
 
 export interface Tool {
-  id: ToolkitOption;
+  id: number;
   name?: string | null;
   useCase?: string | null;
   expectedInput?: string | null;
@@ -14,10 +14,6 @@ export interface Tool {
   categoryId: SdlcPhase;
   category?: string | null;
   suggestedGuidance: string | null;
+  relatedTools: { [key: string]: number };
 }
 
-export enum ToolkitOption {
-  Option1 = 0,
-  Option2 = 1,
-  Option3 = 2
-}

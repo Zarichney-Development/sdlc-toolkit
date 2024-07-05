@@ -1,23 +1,25 @@
 using System.ClientModel;
 using System.Text.Json;
-using OpenAI.Chat;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
-using sdlc_toolkit_api.Models;
+using OpenAI.Chat;
+using Toolkit.Models;
 
-namespace sdlc_toolkit_api.Services;
+namespace Toolkit.Services;
 
 public interface IModelService
 {
     public Task<string> GetResponse(ToolMessage[] chatHistory, DeployedModels? modelName = null);
 }
 
-public class ModelService(IConfiguration configuration, OpenAIClient client) : IModelService
+public sealed class ModelService(IConfiguration configuration, OpenAIClient client) : IModelService
 {
-    private readonly DeployedModels _defaultModel = DeployedModels.gpt35;
+    private const DeployedModels DefaultModel = DeployedModels.gpt40;
 
-    private List<ChatMessage> MapMessages(ToolMessage[] prompts)
+    private static List<ChatMessage> MapMessages(ToolMessage[] prompts)
     {
+        ArgumentNullException.ThrowIfNull(prompts);
+        
         var messages = new List<ChatMessage>();
         foreach (var prompt in prompts)
         {
@@ -49,7 +51,7 @@ public class ModelService(IConfiguration configuration, OpenAIClient client) : I
     {
         var messages = MapMessages(chatHistory);
 
-        var model = GetDeploymentName(modelName ?? _defaultModel);
+        var model = GetDeploymentName(modelName ?? DefaultModel);
         var chatClient = client.GetChatClient(model);
 
         string userResponse;
